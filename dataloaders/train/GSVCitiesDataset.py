@@ -15,12 +15,7 @@ default_transform = T.Compose([
     T.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 ])
 
-# NOTE: Hard coded path to dataset folder 
-BASE_PATH = '/data_nvme/zhangjingyi/Gsv_reflect/mixgsv/'
-
-if not Path(BASE_PATH).exists():
-    raise FileNotFoundError(
-        'BASE_PATH is hardcoded, please adjust to point to gsv_reflect/mixgsv')
+BASE_PATH = None
 
 def is_synthetic_panoid(panoid):
     """Check if a panoid corresponds to a synthetic image.
@@ -50,7 +45,11 @@ class GSVCitiesDataset(Dataset):
                  tmp_group="all",
                  ):
         super(GSVCitiesDataset, self).__init__()
+        if base_path is None:
+            raise ValueError("Please pass --train_dataset_path from the launch script.")
         self.base_path = Path(base_path).expanduser()
+        if not self.base_path.exists():
+            raise FileNotFoundError(f"Training dataset path does not exist: {self.base_path}")
         self.cities = cities
 
         assert img_per_place <= min_img_per_place, \
