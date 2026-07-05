@@ -1,0 +1,55 @@
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+build/
+dist/
+*.egg-info/
+
+# Virtual environments and local config
+.env
+.env.*
+!.env.example
+.venv/
+venv/
+env/
+
+# IDE and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Training/evaluation outputs
+logs/
+test/
+log*.txt
+nohup*.log
+*.log
+
+# Model checkpoints and generated artifacts
+*.pth
+*.pt
+*.ckpt
+*.onnx
+*.safetensors
+checkpoints/
+weights/
+pretrained/
+outputs/
+results/
+runs/
+wandb/
+
+# Datasets and large local files
+data/
+datasets/
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+*.7z
