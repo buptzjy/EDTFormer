@@ -43,9 +43,10 @@ COMMON_ARGS=(
   --final_eval_dataset_names sped amstertime tokyo nordland svox
   --train_dataset_path /data_nvme/zhangjingyi/Gsv_reflect/mixgsv
   --training_subsets default tmp
-  --foundation_model_path /media/data/zhangjingyi/ImAge/module/EDTformer.pth
+  --foundation_model_path /media/data1/zhangjingyi/.cache/torch/hub/checkpoints/dinov2_vitb14_pretrain.pth
+  --resume_author /media/data/zhangjingyi/ImAge/module/EDTformer.pth
   --epochs_num 20
-  --train_batch_size 120
+  --train_batch_size 72
   --infer_batch_size 16
   --resize 322 322
   --lr 5e-6

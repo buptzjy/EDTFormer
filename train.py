@@ -100,6 +100,8 @@ def filter_out_sfxl(dataset_names):
 
 #### Initial setup: parser, logging...
 args = parser.parse_arguments()
+if args.resume and args.resume_author:
+    raise ValueError("Use either --resume for training checkpoints or --resume_author for model-only author weights, not both.")
 start_time = datetime.now()
 args.save_dir = join("logs", args.save_dir, start_time.strftime('%Y-%m-%d_%H-%M-%S'))
 commons.setup_logging(args.save_dir)
@@ -144,7 +146,10 @@ logging.info(f"Intermediate eval datasets: {intermediate_eval_dataset_names}")
 logging.info(f"Final-epoch eval datasets (excluding SF-XL): {final_eval_dataset_names}")
 
 #### Initialize model
-model = network.VPRNet(pretrained_foundation=True, foundation_model_path=args.foundation_model_path)
+model = network.VPRNet(
+    pretrained_foundation=args.foundation_model_path is not None,
+    foundation_model_path=args.foundation_model_path,
+)
 model = model.to(args.device)
 model = torch.nn.DataParallel(model)
 
@@ -186,6 +191,12 @@ if args.resume:
         f"best selection tuple (Pitts30k, MSLS)=({best_pitts_r1:.1f}, {best_msls_r1:.1f})"
     )
 else:
+    if args.resume_author:
+        util.load_model_weights_only(model, args.resume_author, device=args.device, strict=True)
+        logging.info(
+            f"Loaded author/full-model weights from {args.resume_author}; "
+            "optimizer, epoch, and early-stopping state were not resumed."
+        )
     best_pitts_r1 = -1.0
     best_msls_r1 = -1.0
     start_epoch_num = not_improved_num = 0

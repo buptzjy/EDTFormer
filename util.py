@@ -6,9 +6,6 @@ import logging
 import numpy as np
 from collections import OrderedDict
 from os.path import join
-from sklearn.decomposition import PCA
-
-import datasets_ws
 
 def save_checkpoint(args, state, is_best, filename):
     model_path = join(args.save_dir, filename)
@@ -33,6 +30,47 @@ def resume_model(args, model):
     model.load_state_dict(state_dict)
     return model
 
+def load_model_weights_only(model, checkpoint_path, device="cpu", strict=True):
+    """Load only model weights from a checkpoint, adapting DataParallel prefixes."""
+    checkpoint = torch.load(checkpoint_path, map_location=device, weights_only=False)
+    if isinstance(checkpoint, dict) and "model_state_dict" in checkpoint:
+        state_dict = checkpoint["model_state_dict"]
+    elif isinstance(checkpoint, dict) and "state_dict" in checkpoint:
+        state_dict = checkpoint["state_dict"]
+    else:
+        state_dict = checkpoint
+
+    model_state = model.state_dict()
+    remapped_state = OrderedDict()
+    remapped_count = 0
+    for key, value in state_dict.items():
+        candidates = [key]
+        if key.startswith("module."):
+            candidates.append(key[len("module."):])
+        else:
+            candidates.append("module." + key)
+
+        target_key = None
+        for candidate in candidates:
+            if candidate in model_state and model_state[candidate].shape == value.shape:
+                target_key = candidate
+                break
+
+        if target_key is None:
+            target_key = key
+        elif target_key != key:
+            remapped_count += 1
+        remapped_state[target_key] = value
+
+    if remapped_count:
+        logging.info(f"Remapped {remapped_count} checkpoint keys for DataParallel compatibility")
+    missing, unexpected = model.load_state_dict(remapped_state, strict=strict)
+    logging.info(
+        f"Loaded model weights from {checkpoint_path}; "
+        f"missing={len(missing)}, unexpected={len(unexpected)}"
+    )
+    return missing, unexpected
+
 def resume_train(args, model, optimizer=None, strict=False):
     """Load model, optimizer, and other training parameters"""
     logging.debug(f"Loading checkpoint: {args.resume}")
@@ -51,6 +89,9 @@ def resume_train(args, model, optimizer=None, strict=False):
 
 
 def compute_pca(args, model, pca_dataset_folder, full_features_dim):
+    import datasets_ws
+    from sklearn.decomposition import PCA
+
     model = model.eval()
     pca_ds = datasets_ws.PCADataset(args, args.eval_datasets_folder, pca_dataset_folder)
     dl = torch.utils.data.DataLoader(pca_ds, args.infer_batch_size, shuffle=True)

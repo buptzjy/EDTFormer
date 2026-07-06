@@ -28,9 +28,11 @@ def parse_arguments():
     # Initialization parameters
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--foundation_model_path", type=str, default=None,
-                        help="Path to load foundation model checkpoint.")
+                        help="Path to load DINOv2 foundation checkpoint for backbone initialization.")
     parser.add_argument("--resume", type=str, default=None,
                         help="Path to load checkpoint from, for resuming training or testing.")
+    parser.add_argument("--resume_author", type=str, default=None,
+                        help="Path to an author/full-model checkpoint. Loads model weights only, not optimizer or epoch.")
     # Other parameters
     parser.add_argument("--device", type=str, default="cuda", choices=["cuda", "cpu"])
     parser.add_argument("--num_workers", type=int, default=4, help="num_workers for all dataloaders")
